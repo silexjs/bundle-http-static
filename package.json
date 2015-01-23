@@ -1,0 +1,32 @@
+{
+	"name": "silex-bundle-http-static",
+	"version": "0.0.1",
+	"description": "[SILEX][BUNDLE] Sets up an HTTP static file",
+	"author": "Valentin Allaire <valentin@sitexw.fr>",
+	"license": "MIT",
+	"keywords": [
+		"http",
+		"static",
+		"silex",
+		"bundle"
+	],
+	"dependencies": {
+		"spaceload": "<2.0.0",
+		"mime-types": "2.x",
+		"glob": "4.x"
+	},
+	"devDependencies": {},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/silexjs/bundle-http-static.git"
+	},
+	"bugs": {
+		"url": "https://github.com/silexjs/bundle-http-static/issues"
+	},
+	"homepage": "https://github.com/silexjs/bundle-http-static",
+	"autoload": {
+		"psr-4": {
+			"Silex\\HttpStaticBundle": "./"
+		}
+	}
+}

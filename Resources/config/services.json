@@ -1,0 +1,16 @@
+{
+	"services": {
+		"silex.http_static.service": {
+			"class": "Silex.HttpStaticBundle.Services.HttpStatic",
+			"arguments": [
+				{ "type": "service", "id": "kernel" },
+				{ "type": "service", "id": "kernel.config" }
+			],
+			"events": [
+				{ "listener": "http.server.controller", "method": "onController", "priority": 50 },
+				{ "listener": "framework.routing.config", "method": "onRoutingConfig", "priority": 50 },
+				{ "listener": "framework.templating.config", "method": "onTemplatingConfig", "priority": 50 }
+			]
+		}
+	}
+}
