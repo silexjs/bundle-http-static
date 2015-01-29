@@ -8,9 +8,19 @@
 			],
 			"events": [
 				{ "listener": "http.server.controller", "method": "onController", "priority": 50 },
-				{ "listener": "framework.routing.config", "method": "onRoutingConfig", "priority": 50 },
-				{ "listener": "framework.templating.config", "method": "onTemplatingConfig", "priority": 50 }
+				{ "listener": "framework.routing.config", "method": "onRoutingConfig", "priority": 50 }
 			]
+		},
+		"silex.http_static.templating.extensions": {
+			"class": "Silex.HttpStaticBundle.Templating.Extensions",
+			"arguments": [
+				{ "type": "service", "id": "kernel" },
+				{ "type": "service", "id": "kernel.cache" }
+			],
+			"events": [
+				{ "listener": "framework.templating.config", "method": "onTemplatingConfig", "priority": 50 }
+			],
+			"priority": 5
 		}
 	}
 }

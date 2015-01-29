@@ -17,13 +17,12 @@ HttpStatic.prototype = {
 	onController: function(next, request, response) {
 		if(request.route.type === 'static') {
 			var filePath = pa.resolve(request.route.raw.dir, request.route.variables.path);
-			console.log(filePath);
 			if(pa.relative(request.route.raw.dir, filePath).search('\\.\\.') !== -1) {
 				throw new Error('Security');
 			} else if(fs.existsSync(filePath) === false || fs.lstatSync(filePath).isFile() !== true) {
 				throw new ErrorHttpNotFound();
 			}
-			response.setContentType(mime.contentType('file'));
+			response.setContentType(mime.contentType(filePath));
 			response.content = fs.readFileSync(filePath);
 			response.hasResponse = true;
 		}
@@ -45,7 +44,7 @@ HttpStatic.prototype = {
 					}
 					var bundleNameUnderscore = bundle.name.replace(/([A-Z])/g, '_$1').toLowerCase().substr(1);
 					var bundleNameDash = bundleNameUnderscore.replace(/_/g, '-');
-					routes['http_static_public_auto_'+bundleNameUnderscore] = {
+					routes['SilexHttpStaticBundle_public_auto_'+bundleNameUnderscore] = {
 						type: 'static',
 						path: pattern.replace('{bundle}', bundleNameDash)+'/{path}',
 						requirements: { path: '.*' },
@@ -56,9 +55,9 @@ HttpStatic.prototype = {
 			var app = this.config.get('http.static.public.app');
 			if(typeof app === 'string') {
 				if(app[app.length-1] === '/') { app = app.substr(0, app.length-1); }
-				var dir = this.kernel.rootDir+'/app/Resources/public';
+				var dir = (this.kernel.rootDir+'/app/Resources/public').replace(/\\/g, '/');
 				if(fs.existsSync(dir) === true) {
-					routes['http_static_public_auto_app'] = {
+					routes['SilexHttpStaticBundle_public_auto_app'] = {
 						type: 'static',
 						path: app+'/{path}',
 						requirements: { path: '.*' },
@@ -69,12 +68,6 @@ HttpStatic.prototype = {
 			routing.add(routes);
 		}
 		next();
-	},
-	
-	onTemplatingConfig: function(next, templating) {
-		templating.setFilter('asset', function(input, path) {
-			var bundleName = path.match(/\@([A-Za-z]+)\//);
-		});
 	},
 };
 
