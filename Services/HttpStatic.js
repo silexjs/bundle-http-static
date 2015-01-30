@@ -55,7 +55,7 @@ HttpStatic.prototype = {
 			var app = this.config.get('http.static.public.app');
 			if(typeof app === 'string') {
 				if(app[app.length-1] === '/') { app = app.substr(0, app.length-1); }
-				var dir = (this.kernel.rootDir+'/app/Resources/public').replace(/\\/g, '/');
+				var dir = (this.kernel.dir.app+'/Resources/public').replace(/\\/g, '/');
 				if(fs.existsSync(dir) === true) {
 					routes['SilexHttpStaticBundle_public_auto_app'] = {
 						type: 'static',
