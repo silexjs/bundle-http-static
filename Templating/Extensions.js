@@ -32,7 +32,7 @@ Extensions.prototype = {
 				'})();',
 			].join('\n');
 		}, true);
-		swig.setExtension('SilexHttpStaticBundle_public', function(file) {
+		swig.setExtension('SilexHttpStaticBundle_public', function() {
 			var queries = [];
 			var argumentsLength = arguments.length;
 			for(var i=0; i<argumentsLength; i++) {
@@ -46,11 +46,14 @@ Extensions.prototype = {
 			var cacheValue = self.cache.get(cacheKey);
 			if(cacheValue === undefined) {
 				var list = {};
-				var queriesLength = queries.length;
-				for(var i=0; i<queriesLength; i++) {
-					var files = glob.sync(self.kernel.searchBundle(queries[i], 'SWIG.HTTP-STATIC', file));
-					var filesLength = files.length;
-					for(var ii=0; ii<filesLength; ii++) {
+				for(var i in queries) {
+					if(queries[i][0] === '@') {
+						var search = self.kernel.searchBundle(queries[i], 'SWIG.HTTP-STATIC', queries[i]);
+					} else {
+						var search = self.kernel.dir.app+'/Resources/public'+(queries[i][0]!=='/'?'/':'')+queries[i];
+					}
+					var files = glob.sync(search);
+					for(var ii in files) {
 						var url = self.getUrlRouteFile(files[ii]);
 						if(url !== false) {
 							list[files[ii]] = {
