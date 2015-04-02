@@ -1,14 +1,16 @@
 var pa = require('path');
 var fs = require('fs');
+var zlib = require('zlib');
 var mime = require('mime-types');
 var glob = require('glob');
 
 var ErrorHttpNotFound = USE('Silex.HttpServerBundle.Error.HttpNotFound');
 
 
-var HttpStatic = function(kernel, config) {
+var HttpStatic = function(kernel, config, log) {
 	this.kernel = kernel;
 	this.config = config;
+	this.log = log;
 };
 HttpStatic.prototype = {
 	kernel: null,
@@ -22,18 +24,41 @@ HttpStatic.prototype = {
 			} else if(fs.existsSync(filePath) === false || fs.lstatSync(filePath).isFile() !== true) {
 				throw new ErrorHttpNotFound();
 			}
-			response.setContentType(mime.contentType(filePath));
-			response.content = fs.readFileSync(filePath);
-			response.hasResponse = true;
+			var self = this;
+			var respond = function(content, contentEncoding) {
+				response.setContentType(mime.contentType(filePath));
+				if(contentEncoding !== undefined) {
+					response.setHeader('Content-Encoding', contentEncoding);
+				}
+				if(self.kernel.debug === true) {
+					response.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+					response.setHeader('Expires', '0');
+				}
+				response.content = content;
+				response.hasResponse = true;
+				next();
+			};
+			fs.readFile(filePath, function(error, content) {
+				if(self.config.get('http.static.public.gzip') === true && request.getHeader('accept-encoding', '').search('gzip') !== -1) {
+					zlib.gzip(content, function (_, contentGzip) {
+						respond(contentGzip, 'gzip');
+					});
+				} else {
+					respond(content);
+				}
+			});
+		} else {
+			next();
 		}
-		next();
 	},
 	
 	onRoutingConfig: function(next, routing) {
-		if(this.config.get('http.static.public.auto') === true) {
+		var config = this.config.get('http.static.public');
+		var prefix = config.routePrefix || 'SilexHttpStaticBundle_public_auto_';
+		if(config.auto === true) {
 			var self = this;
 			var routes = {};
-			var pattern = this.config.get('http.static.public.pattern');
+			var pattern = config.pattern;
 			if(typeof pattern === 'string') {
 				if(pattern[pattern.length-1] === '/') { pattern = pattern.substr(0, pattern.length-1); }
 				for(var key in this.kernel.bundles) {
@@ -44,7 +69,7 @@ HttpStatic.prototype = {
 					}
 					var bundleNameUnderscore = bundle.name.replace(/([A-Z])/g, '_$1').toLowerCase().substr(1);
 					var bundleNameDash = bundleNameUnderscore.replace(/_/g, '-');
-					routes['SilexHttpStaticBundle_public_auto_'+bundleNameUnderscore] = {
+					routes[prefix+bundleNameUnderscore] = {
 						type: 'static',
 						path: pattern.replace('{bundle}', bundleNameDash)+'/{path}',
 						requirements: { path: '.*' },
@@ -52,12 +77,12 @@ HttpStatic.prototype = {
 					};
 				}
 			}
-			var app = this.config.get('http.static.public.app');
+			var app = config.app;
 			if(typeof app === 'string') {
 				if(app[app.length-1] === '/') { app = app.substr(0, app.length-1); }
 				var dir = (this.kernel.dir.app+'/Resources/public').replace(/\\/g, '/');
 				if(fs.existsSync(dir) === true) {
-					routes['SilexHttpStaticBundle_public_auto_app'] = {
+					routes[prefix+'app'] = {
 						type: 'static',
 						path: app+'/{path}',
 						requirements: { path: '.*' },

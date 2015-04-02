@@ -72,7 +72,9 @@ Extensions.prototype = {
 					if(list[key] === undefined) { continue; }
 					listArray.push(list[key]);
 				}
-				self.cache.set(cacheKey, listArray);
+				if(self.kernel.debug === false) {
+					self.cache.set(cacheKey, listArray);
+				}
 				return listArray;
 			} else {
 				return cacheValue;

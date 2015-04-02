@@ -4,7 +4,8 @@
 			"class": "Silex.HttpStaticBundle.Services.HttpStatic",
 			"arguments": [
 				{ "type": "service", "id": "kernel" },
-				{ "type": "service", "id": "kernel.config" }
+				{ "type": "service", "id": "kernel.config" },
+				{ "type": "service", "id": "kernel.log" }
 			],
 			"events": [
 				{ "listener": "http.server.controller", "method": "onController", "priority": 50 },
