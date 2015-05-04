@@ -26,7 +26,7 @@ HttpStatic.prototype = {
 			}
 			var self = this;
 			var respond = function(content, contentEncoding) {
-				response.setContentType(mime.contentType(filePath));
+				response.setContentType(mime.contentType(pa.basename(filePath)));
 				if(contentEncoding !== undefined) {
 					response.setHeader('Content-Encoding', contentEncoding);
 				}
