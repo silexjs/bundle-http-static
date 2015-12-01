@@ -13,7 +13,10 @@
 	"dependencies": {
 		"spaceload": "<2.0.0",
 		"mime-types": "2.x",
-		"glob": "4.x"
+		"glob": "4.x",
+		"escape-string-regexp": "1.x",
+		"uglify-js": "2.x",
+		"clean-css": "3.x"
 	},
 	"devDependencies": {},
 	"repository": {

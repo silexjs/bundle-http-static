@@ -7,10 +7,9 @@ var glob = require('glob');
 var ErrorHttpNotFound = USE('Silex.HttpServerBundle.Error.HttpNotFound');
 
 
-var HttpStatic = function(kernel, config, log) {
+var HttpStatic = function(kernel, config) {
 	this.kernel = kernel;
 	this.config = config;
-	this.log = log;
 };
 HttpStatic.prototype = {
 	kernel: null,

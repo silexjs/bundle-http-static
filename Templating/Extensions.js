@@ -1,13 +1,22 @@
 var pa = require('path');
 var fs = require('fs');
-var glob = require('glob');
+var crypto = require('crypto');
 
-var Extensions = function(kernel, cache) {
+var glob = require('glob');
+var escapeStringRegexp = require('escape-string-regexp');
+var uglifyJs = require('uglify-js');
+var CleanCss = require('clean-css');
+
+
+var Extensions = function(kernel, config, cache) {
 	this.kernel = kernel;
+	this.compression = config.get('http.static.compression', {});
+	if(this.compression.extentions === undefined) { this.compression.extentions = {}; }
 	this.cache = cache;
 };
 Extensions.prototype = {
 	kernel: null,
+	compression: null,
 	cache: null,
 	routing: null,
 	
@@ -71,6 +80,71 @@ Extensions.prototype = {
 				for(var key in list) {
 					if(list[key] === undefined) { continue; }
 					listArray.push(list[key]);
+				}
+				
+				if(self.compression.enable === true || (self.compression.enable === undefined && self.kernel.env !== 'development')) {
+					var compression = true;
+					var ext = null;
+					var filesCompress = [];
+					for(var i in listArray) {
+						var file = listArray[i];
+						if(ext !== null && file.ext !== ext) {
+							compression = false;
+							break;
+						}
+						ext = file.ext;
+						filesCompress.push(file.path);
+					}
+					if(compression === true && ext !== null) {
+						var dirCache = (self.kernel.dir.app+'/Resources/public/cache/').replace(/\\/g, '/');
+						try {
+							fs.statSync(dirCache);
+						} catch(e) {
+							fs.mkdirSync(dirCache);
+						}
+						var hash = crypto.createHash('sha1').update(key).digest('hex');
+						var fileBasename = hash+ext;
+						var filePath = dirCache+fileBasename;
+						var fileRoute = self.getUrlRouteFile(filePath);
+						var dataWrite = null;
+						if(ext === '.js' && self.compression.extentions.js !== false) {
+							var result = uglifyJs.minify(filesCompress, {
+								compress: false,
+							});
+							dataWrite = result.code;
+						} else if(ext === '.css' && self.compression.extentions.css !== false) {
+							var cssFile = '';
+							var regexIG = /url\([\s'"]*([^"'\(\)]+)[\s'"]*\)/ig;
+							var regexI = /url\([\s'"]*([^"'\(\)]+)[\s'"]*\)/i;
+							for(var i in listArray) {
+								var file = listArray[i];
+								var css = fs.readFileSync(file.path).toString();
+								var matchs = css.match(regexIG);
+								if(matchs !== null) {
+									for(var i in matchs) {
+										var match = matchs[i];
+										var url = match.match(regexI)[1];
+										if(url[0] !== '/') {
+											var urlReplace = pa.join(pa.dirname(file.url), url).replace(/\\/g, '/');
+											var cssNewUrl = match.replace(url, urlReplace);
+											css = css.replace(new RegExp(escapeStringRegexp(match), 'ig'), cssNewUrl);
+										}
+									}
+								}
+								cssFile += css+'\n\n';
+							}
+							dataWrite = new CleanCss({ keepSpecialComments: 0 }).minify(cssFile).styles;
+						}
+						if(dataWrite !== null) {
+							fs.writeFileSync(filePath, dataWrite);
+							listArray = [{
+								url: fileRoute,
+								path: filePath,
+								basename: fileBasename,
+								ext: ext,
+							}];
+						}
+					}
 				}
 				if(self.kernel.debug === false) {
 					self.cache.set(cacheKey, listArray);
